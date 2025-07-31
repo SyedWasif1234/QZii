@@ -1,0 +1,19 @@
+PROBLEM:
+
+-> any one who is logedin in the app can attempt the quiz 
+-> all the question have timer and they will start as soon as the user start the quiz 
+    sol: their must a single question in the page and when user click on next question must be open and then the next zuestion timer must start
+
+-> if the time over then next question will open automatically    
+
+->now i can render all the question with ui problem is:-
+    -no question marks are shown instead correct or incorrect answer are shown
+    -also timer must start after 1 sec of fetching of quesstion
+    -no oanswers were saved in data base its all in frontend
+    -user can copy or move to previous page
+    -user can work without full screen
+    -In the instruction page their must be action like do full page etc.
+    
+
+auth
+category

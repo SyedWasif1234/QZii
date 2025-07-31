@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NEONDB_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  FACULTY
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      UserRole @default(USER)
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categories         Category[] // ADMIN can create many categories
+  quizzes            Quiz[] // ADMIN can create many quizzes
+  userAttemptQuizzes UserQuizAttempt[] // USER attempts multiple quizzes
+  userQuestionAnswer UserQuestionAnswer[]
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions Question[] // Questions in this category
+  quizzes   Quiz[]
+}
+
+//enum attempted/not attempted and instruction is missing
+model Quiz {
+  id         String   @id @default(uuid())
+  title      String
+  Totalmarks      Int @default(0)
+  userId     String
+  categoryId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id] ,onDelete: Cascade)
+
+  questions Question[] // One-to-many (each question points to this quiz)
+
+  userAttemptQuizzes UserQuizAttempt[]
+  userQuestionAnswer UserQuestionAnswer[]
+
+  
+  @@unique([title, categoryId]) 
+}
+
+model Question {
+  id         String   @id @default(uuid())
+  title      String
+  marks      Int
+  timeLimit  Int
+  categoryId String?
+  quizId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  category Category? @relation(fields: [categoryId], references: [id])
+  options  Option[] // Multiple options per question
+  userQuestionAnswer UserQuestionAnswer[]
+
+  @@unique([title, quizId])
+}
+
+model Option {
+  id         String  @id @default(uuid())
+  text       String
+  isCorrect  Boolean // Only one true per question
+  questionId String
+
+  userQuestionAnswer UserQuestionAnswer[] 
+  question Question @relation(fields: [questionId], references: [id] , onDelete: Cascade)
+}
+
+//time missing here
+model UserQuestionAnswer {
+  id          String   @id @default(uuid())
+  userId      String
+  quizId      String
+  questionId  String
+  selectedOptionId String
+  isCorrect   Boolean
+  earnedMarks Int
+  answeredAt  DateTime @default(now())
+  timeLimit  Int  @default(0)
+
+  user        User     @relation(fields: [userId], references: [id])
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  question    Question @relation(fields: [questionId], references: [id])
+  option      Option   @relation(fields: [selectedOptionId], references: [id])
+}
+
+
+//time missing here
+model UserQuizAttempt {
+  id          String   @id @default(uuid())
+  score       Int
+  attemptedAt DateTime @default(now())
+  userId      String
+  quizId      String
+  timeTaken   Int @default(0) // seconds used by the user
+
+  user User @relation(fields: [userId], references: [id])
+  quiz Quiz @relation(fields: [quizId], references: [id])
+}
+
+/**
+ * ✅ Current Functionality
+ * Create a Category.
+ * Add multiple Quizzes inside a Category.
+ * Add multiple Questions to each Quiz (via many-to-many).
+ * Add Options for each Question.
+ * Assign marks to each Question.
+ * Track UserQuizAttempt with final score.
+ * timer for each question
+ * time to solve a question
+ */
+
+// work to do 
+// db connection
+//index.js file pe kaam 
+//necessary dependencies download
