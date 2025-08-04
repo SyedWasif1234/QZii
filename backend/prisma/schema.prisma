@@ -63,7 +63,7 @@ model Quiz {
 
   questions Question[] // One-to-many (each question points to this quiz)
 
-  userAttemptQuizzes UserQuizAttempt[]
+  attempts UserQuizAttempt[]
   userQuestionAnswer UserQuestionAnswer[]
 
   

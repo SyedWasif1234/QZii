@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import {useAuthstore} from "../store/useAuthstore"
 /*
   This component expects a 'categories' prop, which should be an array of objects.
   Each object should have at least an 'id' and a 'name'.
@@ -16,6 +16,8 @@ import { Link } from 'react-router-dom';
 */
 
 const Categories = ({ categories }) => {
+
+  const{authUser} = useAuthstore();
 
   console.log("gettign categoories from categories component" , categories);
   // Placeholder function for handling category deletion
@@ -39,6 +41,7 @@ const Categories = ({ categories }) => {
         <header className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
             <h1 className="text-3xl sm:text-4xl font-bold">Categories</h1>
+         {authUser.role === "ADMIN" && (
             <button
               onClick={handleCreate}
               className="flex items-center justify-center gap-2 bg-[#0077b6] hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-sm hover:shadow-md"
@@ -46,6 +49,7 @@ const Categories = ({ categories }) => {
               <Plus size={20} />
               <span>Create</span>
             </button>
+        )}
           </div>
         </header>
 

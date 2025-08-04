@@ -29,10 +29,10 @@ export const useQuiz_QuesStore = create((set)=>({
 
     getAllQuestions: async(quizId)=>{
         try {
-
+            console.log("quiz Id from strore :",quizId)
             set({isQuestionsLoading:true});
             const result = await axiosInstance.get(`/question/get-questions/${quizId}`);
-            console.log("categories:",result)
+            console.log("questions:",result)
             set({questions:result.data.questions})
             
         } catch (error) {
@@ -40,7 +40,16 @@ export const useQuiz_QuesStore = create((set)=>({
         } finally{
              set({isQuestionsLoading:false});
         }
-    }
+    },
 
+    submitQuizResult : async(quizId , answers)=>{
+       try {
+            const response = await axiosInstance.post(`/question/submit-answer/${quizId}`, { answers });
+            return response.data; // Should return { success: true, finalScore: ... }
+        } catch (error) {
+            console.error("Failed to submit quiz:", error);
+            return { success: false, message: error.response?.data?.message || "Submission failed" };
+        }
+    }
 
 }))

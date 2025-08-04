@@ -9,11 +9,29 @@ PROBLEM:
 ->now i can render all the question with ui problem is:-
     -no question marks are shown instead correct or incorrect answer are shown
     -also timer must start after 1 sec of fetching of quesstion
-    -no oanswers were saved in data base its all in frontend
+    -no answers were saved in data base its all in frontend
     -user can copy or move to previous page
     -user can work without full screen
+    -user can go back to home page while givinng the test
     -In the instruction page their must be action like do full page etc.
     
 
 auth
-category
+category   
+
+
+**LEARNED NEW THING - 
+     db.$transaction - in Prisma ensures that a series of database operations are executed as a single, atomic unit.
+
+    This means it follows an "all or nothing" principle:
+    ✅ If all operations within the transaction succeed, their changes are permanently saved to the database (a commit).
+    ❌ If even one operation fails, all previous operations within that transaction are undone (a rollback), and the database is left in the state it was in before the transaction started.
+
+    This is crucial for maintaining data integrity and consistency.
+
+    Why It's Important
+    
+    Imagine a bank transfer where you need to perform two actions:
+    Subtract money from Account A.
+    Add the same amount to Account B.
+    If you run these as separate operations and the second one fails, you've just deleted money from the system. A transaction wraps both operations, guaranteeing that Account B is credited if and only if Account A was successfully debited.

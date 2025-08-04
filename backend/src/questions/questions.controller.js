@@ -1,3 +1,4 @@
+import { Prisma } from "../generated/prisma/index.js";
 import { db } from "../lib/db.js"; 
 
 
@@ -142,42 +143,88 @@ export const updateQuestions = async(req,res) =>{
 }
 
 
+
+//feature to add in future: how musch time user took to answer will also be saved
 export const submitAnswer = async (req, res) => {
   try {
+
     const userId = req.user.id;
-    const{quizId } = req.params;
-    const {questionId,selectedOptionId} = req.body;
+    const{quizId} = req.params;
+    const{answers} = req.body; //Array of the answer from the frontend
+    /*  
 
-    const question = await db.Question.findUnique({
-      where: { id: questionId },
-      include: { options: true },
-    });
+    DUMMY DATA OF HOW MY ANSWER ARRAY WILL LOOK LIKE
 
-    if (!question) return res.status(404).json({ message: "Question not found" });
-
-    const selectedOption = question.options.find((option) => option.id === selectedOptionId);
-    if (!selectedOption) return res.status(400).json({ message: "Selected option not found" });
-
-    const isCorrect = selectedOption.isCorrect;
-    const earnedMarks = isCorrect ? question.marks : 0;
-
-    // Save the user's answer
-    await db.UserQuestionAnswer.create({
-      data: {
-        userId,
-        quizId,
-        questionId,
-        selectedOptionId,
-        isCorrect,
-        earnedMarks,
+    
+    answers: [
+      {
+        "questionId": "clwjkc6570002asdfg1h23456",
+        "selectedOptionId": "clwjkc65e000basdfghjk7890"
       },
-    });
+      {
+        "questionId": "clwjkd1230004qwertyui1234",
+        "selectedOptionId": "clwjkd12z000qwertyuizx567"
+      },
+      {
+        "questionId": "clwjkf9870008poilkjmnb0987",
+        "selectedOptionId": null
+      }
+    ]
+  
+    
+    */
 
+    if(!Array.isArray(answers))  return res.status(400).json({ message: "Answers must be an array." });
+
+    const result = await db.$transaction(async(prisma)=>{
+      //create a new array carring all questions id
+      const questionId = answers.map((a)=>a.questionId); 
+
+      //fetch all the correct options for these questions 
+      const correctOptions = await prisma.Option.findMany({
+        where:{
+          questionId:{in:questionId},
+          isCorrect:true
+        },
+        select:{
+          id:true,
+          questionId:true,
+          question:{select:{marks:true}}
+        }
+      });
+
+      const correctOptionMap = new Map();
+      correctOptions.forEach((opt)=>{
+        correctOptionMap.set(opt.questionId , {
+          correctOptionId:opt.id,
+          marks:opt.question.marks
+        });
+      });
+     
+      let totalScore =0;
+      for (const answer of answers) {
+        const correctInfo = correctOptionMap.get(answer.questionId);
+        if (correctInfo && answer.selectedOptionId === correctInfo.correctOptionId) {
+          totalScore += correctInfo.marks;
+        }
+      }
+
+      //create a final quiz attempt record
+      const quizAttempt = await prisma.UserQuizAttempt.create({
+        data:{
+          userId:userId,
+          quizId:quizId,
+          score:totalScore,
+        }
+      })
+
+
+      return { score: quizAttempt.score };
+    })
     res.status(200).json({
       success: true,
-      isCorrect,
-      earnedMarks,
-      message: isCorrect ? "Correct Answer!" : "Incorrect Answer",
+      message: "Quiz submitted successfully!",
+      finalScore: result.score,
     });
   } catch (error) {
     console.error("Submit error:", error);

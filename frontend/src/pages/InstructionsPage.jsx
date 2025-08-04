@@ -1,28 +1,21 @@
-//this page is not in use
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import React from 'react'
-import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { useQuiz_QuesStore } from '../store/useQuiz_QuesStore'
-import { Link } from 'react-router-dom'
+const InstructionsPage = () => {
+  const navigate = useNavigate();
+  const { quizId } = useParams();
 
-const QuizStartingPage = () => {
-    const {quizId} = useParams();
-    console.log(quizId)
-    const{getQuizById ,quiz ,isQuizLoading} = useQuiz_QuesStore();
-
-    useEffect(()=>{
-        getQuizById(quizId);
-    },[getQuizById]);
-
-    if(isQuizLoading){
-        return (
-        <div className="flex items-center justify-center h-screen">
-            <span className="text-gray-500 loading loading-dots loading-xl"></span>
-        </div>
-    )}
-
-    console.log("quiz from page.jsx",quiz)
+  const handleStartQuiz = async () => {
+    try {
+      // Request fullscreen for a better, more controlled experience
+      await document.documentElement.requestFullscreen();
+      // Navigate to the questions page after entering fullscreen
+      navigate(`/quiz/${quizId}/questions`);
+    } catch (error) {
+      console.error("Fullscreen request failed:", error);
+      alert("Please enable fullscreen mode to start the quiz.");
+    }
+  };
 
   return (
      <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -38,19 +31,20 @@ const QuizStartingPage = () => {
 
                         {/* Quiz Title */}
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-800">
-                           {quiz?.title || 'Quiz Instructions'}
+                           { 'Quiz Instructions'}
                         </h1>
 
                         {/* Instruction Box */}
                         <div className="bg-gray-100 p-6 rounded-lg w-full max-w-2xl min-h-[150px] flex items-center justify-center">
                             <p className="text-base sm:text-lg text-gray-700">
-                                {quiz?.instructions ?? <ul className="list-disc list-inside text-left space-y-2 mb-6">
+                                <li>  <ul className="list-disc list-inside text-left space-y-2 mb-6">
                                     <li>This quiz must be completed in fullscreen mode.</li>
                                     <li>Do not exit fullscreen or switch tabs during the quiz.</li>
                                     <li>Copying and pasting is disabled.</li>
                                     <li>Each question has a time limit.</li>
                                     <li>Your final score will be calculated upon submission.</li>
-                                </ul>}
+                                </ul></li>
+                              
                             </p>
                         </div>
 
@@ -65,8 +59,7 @@ const QuizStartingPage = () => {
                 </div>
             </div>
     </div>
-  )
-}
+  );
+};
 
-export default QuizStartingPage
-
+export default InstructionsPage;

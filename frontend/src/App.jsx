@@ -11,6 +11,7 @@ import HomePage from './pages/HomePage'
 import EachCategoryPage from './pages/EachCategoryPage'
 import QuizPage from './pages/QuizPage'
 import QuizStartingPage from './pages/QuizStartingPage'
+import InstructionsPage from './pages/InstructionsPage'
 import QestionsPage from './pages/QestionsPage'
 
 const App = () => {
@@ -25,7 +26,7 @@ const App = () => {
           <Route path="/" element={<Layout />} > 
             <Route path="/" element = {authUser ? <HomePage/> : <Navigate to = "/Login" />} />
             <Route path="/category/:categoryId" element = {authUser ? <EachCategoryPage/> : <Navigate to = "/Login" />} />
-            <Route path="/quiz/:quizId" element = {authUser ? <QuizStartingPage/> : <Navigate to = "/Login" />} />
+            <Route path="/quiz/:quizId" element = {authUser ? <InstructionsPage/> : <Navigate to = "/Login" />} />
           </Route>
 
           <Route path="/quiz/:quizId/questions" element = {authUser ? <QestionsPage/> : <Navigate to = "/Login" />} />

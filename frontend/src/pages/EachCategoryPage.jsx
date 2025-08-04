@@ -3,11 +3,13 @@ import { useCategoryStore } from '../store/useCategoryStore'
 import { useParams } from 'react-router-dom';
 import { Plus , Trash2 } from 'lucide-react';
 import {Link} from "react-router-dom"
+import { useAuthstore } from '../store/useAuthstore';
 
 const EachCategoryPage = () => {
  
     const {categoryId} = useParams();
     const {getCategoryById ,category ,isCategoryLoding} = useCategoryStore();
+    const{authUser} = useAuthstore();
 
     console.log(categoryId)
 
@@ -48,13 +50,15 @@ const EachCategoryPage = () => {
         <header className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
             <h1 className="text-3xl sm:text-4xl font-bold">Quizes</h1>
-            <button
+           {authUser.role === "ADMIN" && (
+              <button
               onClick={handleCreate}
               className="flex items-center justify-center gap-2 bg-[#0077b6] hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-sm hover:shadow-md"
             >
               <Plus size={20} />
               <span>Create</span>
             </button>
+           )}
           </div>
         </header>
 
