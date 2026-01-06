@@ -1,29 +1,51 @@
 import React from 'react'
-import { Home } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Home, Trophy } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuthstore } from '../store/useAuthStore'
 
 const Navbar = () => {
+  const {authUser} = useAuthstore();
+  const navigate = useNavigate();
+
+  const handleLandingPage = () => {  
+    navigate('/LandingPage');
+  };
+
+  const handleQuizzPage = () => {  
+    navigate('/Quizz');
+  };
+
+
+
   return (
-    <div >
-      <div className="navbar bg-[#0077b6] shadow-sm">
-  <div className="navbar-start pl-4">
-    <Link to={"/"} ><Home /></Link>
-  </div>
-  <div className="navbar-center">
-    <a className="btn btn-ghost text-3xl text-bold normal-case text-yellow-500">QZii</a>
-  </div>
-  <div className="navbar-end">
-    <button className="btn btn-ghost btn-circle">
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> </svg>
-    </button>
-    <button className="btn btn-ghost btn-circle">
-      <div className="indicator">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> </svg>
-        <span className="badge badge-xs badge-primary indicator-item"></span>
-      </div>
-    </button>
-  </div>
-</div>
+    <div className="pb-5 bg-slate-50 text-slate-900 selection:bg-indigo-100">
+          <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <Trophy className="text-white" size={18} />
+            </div>
+            <span className="text-xl font-bold tracking-tight hover:cursor-pointer" onClick={handleLandingPage}>QuizMaster</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+            <span className='hover:text-indigo-600 transition' onClick={handleQuizzPage}>Quizes</span>
+            <a href="#" className="hover:text-indigo-600 transition">Leaderboard</a>
+            <a href="#" className="hover:text-indigo-600 transition">For Teams</a>
+          </div>
+          <div className="flex items-center gap-4">
+           {
+            authUser?.user ? ( authUser?.user?.name) :(
+                <>
+                <button className="text-sm font-semibold px-4 py-2 text-slate-600">Log in</button>
+            <button className="bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-100">
+              Get Started
+            </button>
+                </>
+            )
+           }
+          </div>
+        </div>
+      </nav>
     </div>
   )
 }

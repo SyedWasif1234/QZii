@@ -5,9 +5,18 @@ import {
   Terminal, BarChart3, Globe 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuthstore } from '../store/useAuthStore';
 
 const LandingPage = () => {
   const [isHovered, setIsHovered] = useState(false);
+
+  const {authUser} = useAuthstore();
+
+    console.log(authUser?.user?.name)
+
+      const handleQuizzPage = () => {  
+    navigate('/EachCategoryPage');
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100">
@@ -21,15 +30,21 @@ const LandingPage = () => {
             <span className="text-xl font-bold tracking-tight">QuizMaster</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <a href="#" className="hover:text-indigo-600 transition">Features</a>
+            <a href="/" className="hover:text-indigo-600 transition">Quizz</a>
             <a href="#" className="hover:text-indigo-600 transition">Leaderboard</a>
             <a href="#" className="hover:text-indigo-600 transition">For Teams</a>
           </div>
           <div className="flex items-center gap-4">
-            <button className="text-sm font-semibold px-4 py-2 text-slate-600">Log in</button>
+           {
+            authUser?.user ? ( authUser?.user?.name) :(
+                <>
+                <button className="text-sm font-semibold px-4 py-2 text-slate-600">Log in</button>
             <button className="bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-100">
               Get Started
             </button>
+                </>
+            )
+           }
           </div>
         </div>
       </nav>
