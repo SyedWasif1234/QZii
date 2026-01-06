@@ -1,2 +1,11 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Smooth transition for theme swapping */
+html {
+  transition: background-color 0.3s ease;
+}

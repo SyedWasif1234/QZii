@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import { useCategoryStore } from '../store/useCategoryStore'
 import Categories from '../components/Categories';
+import LandingPage from '../components/LandingPage';
 
 
 const HomePage = () => {
+
+  
 
     const{getAllCategories,categories,isCategoriesLoading} = useCategoryStore();
     
