@@ -11,7 +11,7 @@ export const useCategoryStore = create((set)=>({
     createCategory: async(data)=>{
 
         try {
-            const result = await axiosInstance.post("/category/create-category",data)
+            const result = await axiosInstance.post("/category/add-category",data)
             console.log("result",result)
             toast.success("Category created successfully")
             
