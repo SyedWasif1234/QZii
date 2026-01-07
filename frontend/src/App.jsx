@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast'
 
 
 import Layout from './layout/Layout'
-import { useAuthstore } from './store/useAuthStore'
+import { useAuthStore } from './store/useAuthStore'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import HomePage from './pages/HomePage'
@@ -19,7 +19,7 @@ import LandingPage from './components/LandingPage'
 
 const App = () => {
 
-  const { authUser, checkAuth, isCheckingAuth } = useAuthstore();
+  const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();

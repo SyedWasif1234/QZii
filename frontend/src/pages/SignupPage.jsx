@@ -3,7 +3,7 @@ import { User, Lock ,Mail} from 'lucide-react';
 import {zodResolver} from "@hookform/resolvers/zod"
 import {z} from "zod";
 import { Link } from 'react-router-dom';
-import { useAuthstore } from '../store/useAuthStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
@@ -19,7 +19,7 @@ const SignupPage = () => {
 
     const{register , handleSubmit , formState:{errors}} = useForm({resolver:zodResolver(SignUpSchema)})
 
-    const {signUp , isSigningUp } = useAuthstore();
+    const {signUp , isSigningUp } = useAuthStore();
 
     const onSubmit = async(data)=>{
         try {

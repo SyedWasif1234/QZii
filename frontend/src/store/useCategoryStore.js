@@ -8,6 +8,19 @@ export const useCategoryStore = create((set)=>({
     isCategoriesLoading:false ,
     isCategoryLoding:false,
 
+    createCategory: async(data)=>{
+
+        try {
+            const result = await axiosInstance.post("/category/create-category",data)
+            console.log("result",result)
+            toast.success("Category created successfully")
+            
+        } catch (error) {
+            console.log("error occured while creating category")
+        }
+        
+    } ,
+
     getAllCategories: async()=>{
         try {
 

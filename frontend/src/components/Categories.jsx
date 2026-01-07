@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAuthstore } from '../store/useAuthStore';
-
+import { useAuthStore } from '../store/useAuthStore';
+import  {useCategoryStore} from "../store/useCategoryStore"
 /*
   This component expects a 'categories' prop, which should be an array of objects.
   Each object should have at least an 'id' and a 'name'.
@@ -16,9 +16,16 @@ import { useAuthstore } from '../store/useAuthStore';
   ];
 */
 
-const Categories = ({ categories }) => {
+const Categories = () => {
 
-  const{authUser} = useAuthstore();
+  const{authUser} = useAuthStore();
+
+    const {getAllCategories , categories} = useCategoryStore();
+  
+    useEffect(()=>{
+      getAllCategories();
+    },[getAllCategories])
+  
 
   console.log(authUser)
 

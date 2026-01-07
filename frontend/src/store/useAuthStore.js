@@ -4,7 +4,7 @@ import toast from "react-hot-toast"
 
 
 //variable and methods which we will use globally 
-export const useAuthstore = create((set)=>({
+export const useAuthStore = create((set)=>({
 
     //variable which we use globally
     authUser : null ,
@@ -58,6 +58,8 @@ export const useAuthstore = create((set)=>({
     logout: async()=>{
         try {
             await axiosInstance.post("/auth/logout")
+            set({isLoggingOut:true})
+            toast.success("Logout successful")
         } catch (error) {
             toast.error("error logging out")
         }

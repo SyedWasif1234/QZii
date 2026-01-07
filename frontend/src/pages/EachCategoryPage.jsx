@@ -3,14 +3,14 @@ import { useCategoryStore } from '../store/useCategoryStore'
 import { useParams } from 'react-router-dom';
 import { Plus , Trash2 } from 'lucide-react';
 import {Link} from "react-router-dom"
-import { useAuthstore } from '../store/useAuthStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 
 const EachCategoryPage = () => {
  
     const {categoryId} = useParams();
     const {getCategoryById ,category ,isCategoryLoding} = useCategoryStore();
-    const{authUser} = useAuthstore();
+    const{authUser} = useAuthStore();
 
     console.log(categoryId)
 
