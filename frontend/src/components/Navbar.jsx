@@ -48,7 +48,7 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
           <Link to="/" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Home</Link>
           <Link to="/leaderboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Leaderboard</Link>
-          <Link to="/teams" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">For Teams</Link>
+          <Link to="/Battle" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">BattleMode</Link>
         </div>
 
         {/* ACTIONS */}
