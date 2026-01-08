@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -20,6 +14,13 @@ enum UserRole {
   FACULTY
 }
 
+enum BattleStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  ABORTED
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -33,6 +34,11 @@ model User {
   quizzes            Quiz[] // ADMIN can create many quizzes
   userAttemptQuizzes UserQuizAttempt[] // USER attempts multiple quizzes
   userQuestionAnswer UserQuestionAnswer[]
+
+  // --- NEW RELATIONS FOR BATTLE FEATURE ---
+  battlesAsPlayer1 Battle[]     @relation("Player1")
+  battlesAsPlayer2 Battle[]     @relation("Player2")
+  battleMoves      BattleMove[]
 }
 
 model Category {
@@ -48,26 +54,26 @@ model Category {
   quizzes   Quiz[]
 }
 
-//enum attempted/not attempted and instruction is missing
 model Quiz {
-  id         String   @id @default(uuid())
-  title      String
-  Totalmarks      Int @default(0)
-  userId     String
-  categoryId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  title       String
+  Totalmarks  Int      @default(0)
+  userId      String
+  categoryId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id] ,onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  questions Question[] // One-to-many (each question points to this quiz)
-
-  attempts UserQuizAttempt[]
+  questions          Question[] // One-to-many (each question points to this quiz)
+  attempts           UserQuizAttempt[]
   userQuestionAnswer UserQuestionAnswer[]
 
-  
-  @@unique([title, categoryId]) 
+  // --- NEW RELATION FOR BATTLE FEATURE ---
+  battles Battle[]
+
+  @@unique([title, categoryId])
 }
 
 model Question {
@@ -82,8 +88,8 @@ model Question {
 
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
-  category Category? @relation(fields: [categoryId], references: [id])
-  options  Option[] // Multiple options per question
+  category           Category?            @relation(fields: [categoryId], references: [id])
+  options            Option[] // Multiple options per question
   userQuestionAnswer UserQuestionAnswer[]
 
   @@unique([title, quizId])
@@ -95,55 +101,67 @@ model Option {
   isCorrect  Boolean // Only one true per question
   questionId String
 
-  userQuestionAnswer UserQuestionAnswer[] 
-  question Question @relation(fields: [questionId], references: [id] , onDelete: Cascade)
+  userQuestionAnswer UserQuestionAnswer[]
+  question           Question             @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
-//time missing here
 model UserQuestionAnswer {
-  id          String   @id @default(uuid())
-  userId      String
-  quizId      String
-  questionId  String
+  id               String   @id @default(uuid())
+  userId           String
+  quizId           String
+  questionId       String
   selectedOptionId String
-  isCorrect   Boolean
-  earnedMarks Int
-  answeredAt  DateTime @default(now())
-  timeLimit  Int  @default(0)
+  isCorrect        Boolean
+  earnedMarks      Int
+  answeredAt       DateTime @default(now())
+  timeLimit        Int      @default(0)
 
-  user        User     @relation(fields: [userId], references: [id])
-  quiz        Quiz     @relation(fields: [quizId], references: [id])
-  question    Question @relation(fields: [questionId], references: [id])
-  option      Option   @relation(fields: [selectedOptionId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  quiz     Quiz     @relation(fields: [quizId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+  option   Option   @relation(fields: [selectedOptionId], references: [id])
 }
 
-
-//time missing here
 model UserQuizAttempt {
   id          String   @id @default(uuid())
   score       Int
   attemptedAt DateTime @default(now())
   userId      String
   quizId      String
-  timeTaken   Int @default(0) // seconds used by the user
+  timeTaken   Int      @default(0) // seconds used by the user
 
   user User @relation(fields: [userId], references: [id])
   quiz Quiz @relation(fields: [quizId], references: [id])
 }
 
-/**
- * ✅ Current Functionality
- * Create a Category.
- * Add multiple Quizzes inside a Category.
- * Add multiple Questions to each Quiz (via many-to-many).
- * Add Options for each Question.
- * Assign marks to each Question.
- * Track UserQuizAttempt with final score.
- * timer for each question
- * time to solve a question
- */
+model Battle {
+  id        String       @id @default(uuid())
+  player1Id String
+  player2Id String? // Nullable initially (if waiting for opponent)
+  quizId    String
+  status    BattleStatus @default(WAITING)
+  winnerId  String? // ID of the winner
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-// work to do 
-// db connection
-//index.js file pe kaam 
-//necessary dependencies download
+  // The names inside @relation("Player1") match what we added to the User model
+  player1 User  @relation("Player1", fields: [player1Id], references: [id])
+  player2 User? @relation("Player2", fields: [player2Id], references: [id])
+  quiz    Quiz  @relation(fields: [quizId], references: [id])
+
+  moves BattleMove[] // Track every answer submitted in this battle
+}
+
+model BattleMove {
+  id         String   @id @default(uuid())
+  battleId   String
+  userId     String
+  questionId String
+  optionId   String
+  isCorrect  Boolean
+  score      Int // Points earned (e.g., speed bonus + accuracy)
+  createdAt  DateTime @default(now())
+
+  battle Battle @relation(fields: [battleId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
