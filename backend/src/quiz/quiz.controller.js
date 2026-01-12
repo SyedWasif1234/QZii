@@ -32,6 +32,27 @@ export const addQuiz = async(req,res) =>{
     }
 }
 
+//get all quizes irrespective of categories
+export const getAllQuizes_without_category = async(req , res) =>{
+  try {
+
+    const allQuizes = await db.Quiz.findMany({
+        include:{
+            questions:true
+        }
+    })
+
+    res.status(200).json({
+        message:"all quiz fetched successfully",
+        Quiz:allQuizes
+    })
+    
+  } catch (error) {
+    console.log("error occured while fetching all the quizes :" , error);
+    res.status(500).json({message:"error occured while fetching all the quizes"})
+  }
+}
+
 //fetching all quizes related to categories
 export const getAllQuizes = async(req,res)=>{
     try {

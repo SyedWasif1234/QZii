@@ -27,15 +27,17 @@ export const initializeSocket = (io) => {
           created_at: Date.now(),
         };
 
+        console.log("ROOME DATA :", roomData);
+
         // A. Store Room in Redis (Hash)
-        
+
         // We use JSON.stringify for some values if needed, but Upstash handles flat objects well in hset
         //flat objects are objects that have no nested objects or arrays.
 
         //hset key field value: To store the room object (e.g., room:123).
 
         await redis.hset(roomKey, roomData);
-        
+
         // B. Set Expiry (Room dies after 1 hour to save space)
         await redis.expire(roomKey, 3600);
 
@@ -49,11 +51,10 @@ export const initializeSocket = (io) => {
         console.log(`[Redis] Room Created: ${roomId} by ${username}`);
 
         // E. Reply to Client
-        socket.emit("room_created", { 
-          roomId, 
-          link: `/battle/room/${roomId}` 
+        socket.emit("room_created", {
+          roomId,
+          link: `/battle/room/${roomId}`,
         });
-
       } catch (error) {
         console.error("Redis Error creating room:", error);
         socket.emit("room_error", { message: "Failed to create room." });
@@ -61,12 +62,10 @@ export const initializeSocket = (io) => {
     });
 
     // --- 2. JOIN CHALLENGE (Friend) ---
+    // --- 2. JOIN CHALLENGE (Friend) ---
     socket.on("join_challenge", async ({ roomId, username }) => {
       try {
         const roomKey = `room:${roomId}`;
-        
-        // A. Fetch Room Data
-        //hgetall key: To fetch the entire room data.
         const room = await redis.hgetall(roomKey);
 
         // Validation
@@ -75,37 +74,84 @@ export const initializeSocket = (io) => {
           return;
         }
 
+        // --- LOGIC: HANDLE RE-JOINS & ROLES ---
+
+        console.log(`🔍 DEBUG JOIN:`);
+        console.log(`- Incoming User: ${username}`);
+        console.log(`- Stored Host: ${room.hostName}`);
+        console.log(`- Match? ${room.hostName === username}`);
+
+        // 1. IS THIS THE HOST?
+        if (room.hostName === username) {
+          // Update Host's latest socket ID
+          await redis.hset(roomKey, { hostSocketId: socket.id });
+          await redis.set(`socket:${socket.id}`, roomId);
+          socket.join(roomId);
+
+          // If game is already running, just put them back in
+          if (room.status === "active") {
+            emitStartGame(
+              io,
+              roomId,
+              room.quizId,
+              socket.id,
+              room.hostName,
+              room.player2SocketId,
+              room.player2Name
+            );
+          }
+          return; // STOP EXECUTION
+        }
+
+        // 2. IS THIS PLAYER 2 RE-JOINING? (Fixes "Lobby Full" on refresh)
+        if (room.player2Name === username) {
+          // Update P2's latest socket ID
+          await redis.hset(roomKey, { player2SocketId: socket.id });
+          await redis.set(`socket:${socket.id}`, roomId);
+          socket.join(roomId);
+
+          emitStartGame(
+            io,
+            roomId,
+            room.quizId,
+            room.hostSocketId,
+            room.hostName,
+            socket.id,
+            room.player2Name
+          );
+          return; // STOP EXECUTION
+        }
+
+        // 3. IS ROOM FULL? (New Player trying to enter)
         if (room.status !== "waiting") {
-          socket.emit("room_error", { message: "Match already started." });
+          socket.emit("room_error", {
+            message: "Match already started or full.",
+          });
           return;
         }
 
-        // B. Update Room in Redis (Add Player 2)
+        // 4. NEW PLAYER JOINING (Success Case)
         await redis.hset(roomKey, {
           player2SocketId: socket.id,
-          player2Name: username || "Player 2",
+          player2Name: username,
           status: "active",
         });
 
-        // C. Map Socket ID to Room ID
         await redis.set(`socket:${socket.id}`, roomId);
-        await redis.expire(`socket:${socket.id}`, 3600);
-
-        // D. Join Socket Room
         socket.join(roomId);
 
         console.log(`[Redis] Player Joined Room: ${roomId}`);
 
-        // E. Notify Both Players (Start Game)
-        io.to(roomId).emit("start_game", {
+        // Notify Everyone
+        emitStartGame(
+          io,
           roomId,
-          quizId: room.quizId,
-          players: {
-            p1: { id: room.hostSocketId, name: room.hostName },
-            p2: { id: socket.id, name: username || "Player 2" },
-          },
-        });
-
+          room.quizId,
+          room.hostSocketId,
+          room.hostName,
+          socket.id,
+          username
+        );
       } catch (error) {
         console.error("Redis Error joining room:", error);
       }
@@ -114,7 +160,7 @@ export const initializeSocket = (io) => {
     // --- 3. DISCONNECT HANDLER ---
     socket.on("disconnect", async () => {
       console.log(`❌ User disconnected: ${socket.id}`);
-      
+
       try {
         // A. Find which room this user was in
         const socketKey = `socket:${socket.id}`;
@@ -125,7 +171,11 @@ export const initializeSocket = (io) => {
           const room = await redis.hgetall(roomKey);
 
           // If room exists and status is 'waiting', and the HOST left -> Delete Room
-          if (room && room.status === "waiting" && room.hostSocketId === socket.id) {
+          if (
+            room &&
+            room.status === "waiting" &&
+            room.hostSocketId === socket.id
+          ) {
             await redis.del(roomKey);
             console.log(`[Redis] Room ${roomId} deleted (Host left).`);
           }
@@ -137,5 +187,16 @@ export const initializeSocket = (io) => {
         console.error("Redis Cleanup Error:", error);
       }
     });
+  });
+};
+
+const emitStartGame = (io, roomId, quizId, hostId, hostName, p2Id, p2Name) => {
+  io.to(roomId).emit("start_game", {
+    roomId,
+    quizId,
+    players: {
+      p1: { id: hostId, name: hostName },
+      p2: { id: p2Id, name: p2Name },
+    },
   });
 };
