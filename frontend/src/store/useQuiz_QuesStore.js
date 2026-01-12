@@ -11,6 +11,25 @@ export const useQuiz_QuesStore = create((set)=>({
 
     quiz:null,
     isQuizLoading:false,
+    quizes:[],
+    isQuizesLoading:false,
+
+
+
+    getAllQuizes: async() => {
+        try {
+            set({isQuizesLoading:true});
+            const result = await axiosInstance.get("/quiz/get-all-quiz-without-category");
+            set({quizes:result.data.Quiz})
+            
+        } catch (error) {
+            console.log("error occured while fetching quizes ");
+            toast.error("error occured while fetching quizes")
+        }
+        finally{
+            set({isQuizesLoading:false});
+        }
+    },
 
     getQuizById:async(quizId)=>{
         try {

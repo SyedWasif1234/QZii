@@ -1,7 +1,7 @@
 import React from 'react'
 import { Routes , Route ,Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-
+import { useEffect } from 'react'
 
 import Layout from './layout/Layout'
 import { useAuthStore } from './store/useAuthStore'
@@ -13,20 +13,32 @@ import QuizPage from './pages/QuizPage'
 import QuizStartingPage from './pages/QuizStartingPage'
 import InstructionsPage from './pages/InstructionsPage'
 import QestionsPage from './pages/QestionsPage'
-import { useEffect } from 'react'
 import { Loader } from 'lucide-react'
 import LandingPage from './components/LandingPage'
 
 import BattleMode from './pages/BattleMode'
 import BattleArena from './pages/BattleArena'
+import { useSocketStore } from './store/useSocketStore'
 
 const App = () => {
 
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { connectSocket, disconnectSocket, isConnected } = useSocketStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+    useEffect(() => {
+    if (authUser) {
+      connectSocket();
+    } else {
+      disconnectSocket();
+    }
+    
+    // Cleanup on unmount
+    return () => disconnectSocket();
+  }, [authUser, connectSocket, disconnectSocket]);
 
   // IMPORTANT: Show a loading spinner while checking auth
   // This prevents the <Navigate /> from running prematurely
@@ -37,6 +49,8 @@ const App = () => {
       </div>
     );
   }
+
+
 
 
   return (

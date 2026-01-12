@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Swords,
   Users,
@@ -7,22 +7,22 @@ import {
   Timer,
   Search,
   ArrowRight,
+  Keyboard, // Added Keyboard icon for the Join section
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Ensure these components exist in your components folder
 import MatchmakingModal from "../components/MatchmakingModal";
 import ChallengeFriendModal from "../components/ChallengeFriendModal";
-// import { useSocket } from "../context/SocketContext"; 
 
 const BattleMode = () => {
   const navigate = useNavigate();
-  // const { socket } = useSocket();
 
   // --- STATE MANAGEMENT ---
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isChallengeOpen, setIsChallengeOpen] = useState(false); // Controls the Friend Modal
+  const [joinCode, setJoinCode] = useState(""); // NEW: For manual join input
 
   // --- 1. DUMMY DATA ---
   const currentUserStats = {
@@ -83,31 +83,29 @@ const BattleMode = () => {
     },
   ];
 
-  // --- 2. SOCKET CONNECTION LOGIC ---
-  useEffect(() => {
-    // A. Connect when component mounts
-    console.log("🔌 Socket: Connecting to Battle Lobby...");
-    // socket.connect();
-    // socket.emit('join_lobby');
-
-    return () => {
-      // B. Disconnect/Leave when component unmounts to save resources
-      console.log("🔌 Socket: Leaving Battle Lobby...");
-      // socket.emit('leave_lobby');
-      // socket.disconnect();
-    };
-  }, []);
-
-  // --- 3. HANDLERS ---
+  // --- HANDLERS ---
+  
   const handleQuickMatch = () => {
     setSelectedCategory(null); // Random category
     setIsSearching(true);
-    // Socket emit would happen inside the Modal
   };
 
   const handleCategoryClick = (catName) => {
     setSelectedCategory(catName);
     setIsSearching(true);
+  };
+
+  // NEW: Handle joining by text input
+  const handleJoinByCode = (e) => {
+    e.preventDefault();
+    if (!joinCode.trim()) return;
+
+    // Logic to handle both full URLs and raw IDs
+    // If input is "http://localhost:5173/battle/room/abc-123" -> extracts "abc-123"
+    // If input is "abc-123" -> keeps "abc-123"
+    const code = joinCode.split('/').pop();
+
+    navigate(`/battle/room/${code}`);
   };
 
   return (
@@ -169,62 +167,94 @@ const BattleMode = () => {
             </div>
           </div>
 
-          {/* 2. Right Col: Action Area (Quick Match & Challenge) */}
-          <div className="lg:col-span-2 bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl p-8 text-white shadow-lg shadow-sky-200 flex flex-col justify-center relative overflow-hidden">
+          {/* 2. Right Col: Action Area */}
+          <div className="lg:col-span-2 flex flex-col gap-6">
             
-            {/* Background Decorations */}
-            <div className="absolute top-0 right-0 -mr-10 -mt-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-500 opacity-20 rounded-full blur-2xl"></div>
+            {/* A. PRIMARY ACTIONS (Hero Card) */}
+            <div className="bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl p-8 text-white shadow-lg shadow-sky-200 flex flex-col justify-center relative overflow-hidden">
+              
+              {/* Background Decorations */}
+              <div className="absolute top-0 right-0 -mr-10 -mt-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-500 opacity-20 rounded-full blur-2xl"></div>
 
-            <div className="relative z-10 space-y-6 max-w-xl">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">Ready to battle?</h2>
-                <p className="text-sky-100 text-lg">
-                  Prove your mastery. Play ranked matches or challenge your friends directly.
-                </p>
+              <div className="relative z-10 space-y-6 max-w-xl">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">Ready to battle?</h2>
+                  <p className="text-sky-100 text-lg">
+                    Prove your mastery. Play ranked matches or challenge your friends directly.
+                  </p>
+                </div>
+
+                {/* BUTTONS CONTAINER */}
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                  
+                  {/* QUICK MATCH BUTTON */}
+                  <button
+                    onClick={handleQuickMatch}
+                    disabled={isSearching}
+                    className="flex-1 group flex items-center justify-center gap-3 bg-white text-sky-600 px-6 py-4 rounded-xl font-bold hover:bg-sky-50 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
+                  >
+                    {isSearching ? (
+                      <>
+                        <Timer className="animate-spin" size={20} />
+                        Finding...
+                      </>
+                    ) : (
+                      <>
+                        <Swords
+                          size={20}
+                          className="group-hover:rotate-12 transition-transform"
+                        />
+                        Quick Match
+                      </>
+                    )}
+                  </button>
+
+                  {/* CHALLENGE FRIEND BUTTON */}
+                  <button
+                    onClick={() => setIsChallengeOpen(true)}
+                    className="flex-1 flex items-center justify-center gap-3 bg-sky-700/40 text-white border-2 border-sky-400/30 px-6 py-4 rounded-xl font-bold hover:bg-sky-700/60 transition-all active:scale-95 shadow-md backdrop-blur-sm"
+                  >
+                    <Users size={20} />
+                    Challenge Friend
+                  </button>
+                  
+                </div>
               </div>
 
-              {/* BUTTONS CONTAINER */}
-              <div className="flex flex-col sm:flex-row gap-4 w-full">
-                
-                {/* A. QUICK MATCH BUTTON */}
-                <button
-                  onClick={handleQuickMatch}
-                  disabled={isSearching}
-                  className="flex-1 group flex items-center justify-center gap-3 bg-white text-sky-600 px-6 py-4 rounded-xl font-bold hover:bg-sky-50 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
-                >
-                  {isSearching ? (
-                    <>
-                      <Timer className="animate-spin" size={20} />
-                      Finding...
-                    </>
-                  ) : (
-                    <>
-                      <Swords
-                        size={20}
-                        className="group-hover:rotate-12 transition-transform"
-                      />
-                      Quick Match
-                    </>
-                  )}
-                </button>
-
-                {/* B. CHALLENGE FRIEND BUTTON */}
-                <button
-                  onClick={() => setIsChallengeOpen(true)}
-                  className="flex-1 flex items-center justify-center gap-3 bg-sky-700/40 text-white border-2 border-sky-400/30 px-6 py-4 rounded-xl font-bold hover:bg-sky-700/60 transition-all active:scale-95 shadow-md backdrop-blur-sm"
-                >
-                  <Users size={20} />
-                  Challenge Friend
-                </button>
-                
+              {/* Zap Illustration */}
+              <div className="hidden md:block absolute bottom-0 right-0 z-0 opacity-20 pointer-events-none">
+                <Zap size={140} className="text-white rotate-12 translate-x-10 translate-y-10" />
               </div>
             </div>
 
-            {/* Zap Illustration */}
-            <div className="hidden md:block absolute bottom-0 right-0 z-0 opacity-20 pointer-events-none">
-              <Zap size={140} className="text-white rotate-12 translate-x-10 translate-y-10" />
+            {/* B. SECONDARY ACTION: JOIN WITH CODE */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center gap-4">
+               <div className="flex items-center gap-3 text-slate-700 min-w-max">
+                  <div className="p-2 bg-slate-100 rounded-lg">
+                    <Keyboard size={20} />
+                  </div>
+                  <span className="font-bold">Have a code?</span>
+               </div>
+               
+               <form onSubmit={handleJoinByCode} className="flex-1 w-full flex gap-2">
+                 <input 
+                   type="text" 
+                   placeholder="Enter Room ID or Paste Link..."
+                   value={joinCode}
+                   onChange={(e) => setJoinCode(e.target.value)}
+                   className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all"
+                 />
+                 <button 
+                   type="submit"
+                   disabled={!joinCode}
+                   className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                 >
+                   Join
+                 </button>
+               </form>
             </div>
+
           </div>
         </div>
 
