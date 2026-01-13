@@ -1,5 +1,24 @@
 import { db } from "../lib/db.js";
 
+export const FetchQuizData = async(quizId) =>{
+     const quiz = await db.Quiz.findUnique({
+      where:{
+        id:quizId
+      },
+      include:{
+        questions:{
+          include:{
+            options:true
+          }
+        }
+      }
+    })
+
+    console.log(quiz)
+    
+    return quiz ;
+}
+
 export const addQuiz = async(req,res) =>{
     try {
         const userId = req.user.id;
@@ -83,11 +102,10 @@ export const getQuizById = async(req,res)=>{
   try {
     const{userId} = req.user.id;
     const{quizId} = req.params;
-    const quiz = await db.Quiz.findUnique({
-      where:{
-        id:quizId
-      }
-    })
+
+    const quiz = await FetchQuizData(quizId);
+    if(!quiz) return res.status(400).json({message:"no such quiz exists"});
+ 
     res.status(200).json({
       success:true,
       quiz:quiz,
