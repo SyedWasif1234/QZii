@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Swords,
   Users,
@@ -7,7 +7,8 @@ import {
   Timer,
   Search,
   ArrowRight,
-  Keyboard, // Added Keyboard icon for the Join section
+  Keyboard,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,72 +16,40 @@ import { useNavigate } from "react-router-dom";
 import MatchmakingModal from "../components/MatchmakingModal";
 import ChallengeFriendModal from "../components/ChallengeFriendModal";
 
+// Import your Category Store
+import { useCategoryStore } from "../store/useCategoryStore";
+
 const BattleMode = () => {
   const navigate = useNavigate();
 
   // --- STATE MANAGEMENT ---
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [isChallengeOpen, setIsChallengeOpen] = useState(false); // Controls the Friend Modal
-  const [joinCode, setJoinCode] = useState(""); // NEW: For manual join input
+  const [isChallengeOpen, setIsChallengeOpen] = useState(false); 
+  const [joinCode, setJoinCode] = useState("");
 
-  // --- 1. DUMMY DATA ---
+  // --- STORE ACCESS ---
+  // Assuming useCategoryStore returns { categories, getAllCategories, isLoading }
+  // Check your store structure. If 'isLoading' isn't there, you might want to add it.
+  const { getAllCategories, categories, isLoading } = useCategoryStore();
+
+  // --- 1. FETCH CATEGORIES ON MOUNT ---
+  useEffect(() => {
+    getAllCategories();
+  }, [getAllCategories]);
+
+  // --- DUMMY DATA (Only for stats/ticker, not main logic) ---
   const currentUserStats = {
-    rank: "Diamond III",
-    wins: 142,
-    battles: 200,
-    winRate: "71%",
+    rank: "****",
+    wins: "**",
+    battles: "X",
+    winRate: "x%",
   };
 
-  const activeCategories = [
-    {
-      id: 1,
-      name: "JavaScript",
-      activePlayers: 124,
-      color: "bg-yellow-50 text-yellow-600 border-yellow-200",
-    },
-    {
-      id: 2,
-      name: "System Design",
-      activePlayers: 85,
-      color: "bg-purple-50 text-purple-600 border-purple-200",
-    },
-    {
-      id: 3,
-      name: "Python",
-      activePlayers: 200,
-      color: "bg-blue-50 text-blue-600 border-blue-200",
-    },
-    {
-      id: 4,
-      name: "SQL",
-      activePlayers: 56,
-      color: "bg-emerald-50 text-emerald-600 border-emerald-200",
-    },
-  ];
-
   const liveBattles = [
-    {
-      id: 101,
-      p1: "AlexDev",
-      p2: "CodeMaster",
-      category: "React JS",
-      status: "In Progress",
-    },
-    {
-      id: 102,
-      p1: "Sarah_01",
-      p2: "BugHunter",
-      category: "Node.js",
-      status: "In Progress",
-    },
-    {
-      id: 103,
-      p1: "Junior_Dev",
-      p2: "Sr_Engineer",
-      category: "DSA",
-      status: "In Progress",
-    },
+    { id: 101, p1: "AlexDev", p2: "CodeMaster", category: "React JS", status: "In Progress" },
+    { id: 102, p1: "Sarah_01", p2: "BugHunter", category: "Node.js", status: "In Progress" },
+    { id: 103, p1: "Junior_Dev", p2: "Sr_Engineer", category: "DSA", status: "In Progress" },
   ];
 
   // --- HANDLERS ---
@@ -95,17 +64,25 @@ const BattleMode = () => {
     setIsSearching(true);
   };
 
-  // NEW: Handle joining by text input
   const handleJoinByCode = (e) => {
     e.preventDefault();
     if (!joinCode.trim()) return;
-
-    // Logic to handle both full URLs and raw IDs
-    // If input is "http://localhost:5173/battle/room/abc-123" -> extracts "abc-123"
-    // If input is "abc-123" -> keeps "abc-123"
     const code = joinCode.split('/').pop();
-
     navigate(`/battle/room/${code}`);
+  };
+
+  // Helper to generate consistent colors based on category index or name
+  // This replaces the hardcoded 'color' property from your previous dummy data
+  const getCategoryColor = (index) => {
+    const colors = [
+      "bg-yellow-50 text-yellow-600 border-yellow-200",
+      "bg-purple-50 text-purple-600 border-purple-200",
+      "bg-blue-50 text-blue-600 border-blue-200",
+      "bg-emerald-50 text-emerald-600 border-emerald-200",
+      "bg-red-50 text-red-600 border-red-200",
+      "bg-indigo-50 text-indigo-600 border-indigo-200",
+    ];
+    return colors[index % colors.length];
   };
 
   return (
@@ -125,8 +102,7 @@ const BattleMode = () => {
             Competitive <span className="text-sky-600">Battle Mode</span>
           </h1>
           <p className="text-slate-500 max-w-xl mx-auto">
-            Challenge real players in real-time 1v1 quizzes. Climb the
-            leaderboard and prove your mastery.
+            Challenge real players in real-time 1v1 quizzes. Climb the leaderboard and prove your mastery.
           </p>
         </div>
 
@@ -144,23 +120,17 @@ const BattleMode = () => {
                   <Trophy size={24} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {currentUserStats.rank}
-                  </p>
+                  <p className="text-2xl font-bold text-slate-800">{currentUserStats.rank}</p>
                   <p className="text-sm text-slate-500">Current Rank</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-slate-50 rounded-xl">
-                  <p className="text-lg font-bold text-slate-700">
-                    {currentUserStats.wins}
-                  </p>
+                  <p className="text-lg font-bold text-slate-700">{currentUserStats.wins}</p>
                   <p className="text-xs text-slate-500">Total Wins</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl">
-                  <p className="text-lg font-bold text-sky-600">
-                    {currentUserStats.winRate}
-                  </p>
+                  <p className="text-lg font-bold text-sky-600">{currentUserStats.winRate}</p>
                   <p className="text-xs text-slate-500">Win Rate</p>
                 </div>
               </div>
@@ -170,10 +140,8 @@ const BattleMode = () => {
           {/* 2. Right Col: Action Area */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             
-            {/* A. PRIMARY ACTIONS (Hero Card) */}
+            {/* A. PRIMARY ACTIONS */}
             <div className="bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl p-8 text-white shadow-lg shadow-sky-200 flex flex-col justify-center relative overflow-hidden">
-              
-              {/* Background Decorations */}
               <div className="absolute top-0 right-0 -mr-10 -mt-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-500 opacity-20 rounded-full blur-2xl"></div>
 
@@ -185,44 +153,28 @@ const BattleMode = () => {
                   </p>
                 </div>
 
-                {/* BUTTONS CONTAINER */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
-                  
-                  {/* QUICK MATCH BUTTON */}
                   <button
                     onClick={handleQuickMatch}
                     disabled={isSearching}
                     className="flex-1 group flex items-center justify-center gap-3 bg-white text-sky-600 px-6 py-4 rounded-xl font-bold hover:bg-sky-50 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
                   >
                     {isSearching ? (
-                      <>
-                        <Timer className="animate-spin" size={20} />
-                        Finding...
-                      </>
+                      <> <Timer className="animate-spin" size={20} /> Finding... </>
                     ) : (
-                      <>
-                        <Swords
-                          size={20}
-                          className="group-hover:rotate-12 transition-transform"
-                        />
-                        Quick Match
-                      </>
+                      <> <Swords size={20} className="group-hover:rotate-12 transition-transform" /> Quick Match </>
                     )}
                   </button>
 
-                  {/* CHALLENGE FRIEND BUTTON */}
                   <button
                     onClick={() => setIsChallengeOpen(true)}
                     className="flex-1 flex items-center justify-center gap-3 bg-sky-700/40 text-white border-2 border-sky-400/30 px-6 py-4 rounded-xl font-bold hover:bg-sky-700/60 transition-all active:scale-95 shadow-md backdrop-blur-sm"
                   >
-                    <Users size={20} />
-                    Challenge Friend
+                    <Users size={20} /> Challenge Friend
                   </button>
-                  
                 </div>
               </div>
-
-              {/* Zap Illustration */}
+              
               <div className="hidden md:block absolute bottom-0 right-0 z-0 opacity-20 pointer-events-none">
                 <Zap size={140} className="text-white rotate-12 translate-x-10 translate-y-10" />
               </div>
@@ -258,30 +210,48 @@ const BattleMode = () => {
           </div>
         </div>
 
-        {/* --- LIVE CATEGORIES GRID --- */}
+        {/* --- LIVE CATEGORIES GRID (DYNAMIC) --- */}
         <div>
           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
             <Search size={18} className="text-slate-400" />
             Browse Battle Categories
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {activeCategories.map((cat) => (
-              <div
-                key={cat.id}
-                onClick={() => handleCategoryClick(cat.name)}
-                className={`p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md hover:-translate-y-1 ${cat.color} bg-white border-transparent hover:border-current`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-bold text-lg">{cat.name}</h4>
-                  <Users size={16} className="opacity-70" />
+          
+          {/* LOADING STATE */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+               {[1,2,3,4].map(i => (
+                 <div key={i} className="h-24 bg-slate-200 rounded-xl animate-pulse"></div>
+               ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {categories && categories.length > 0 ? (
+                categories.map((cat, index) => (
+                  <div
+                    key={cat.id || index}
+                    onClick={() => handleCategoryClick(cat.name)}
+                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer hover:shadow-md hover:-translate-y-1 bg-white border-transparent hover:border-current ${getCategoryColor(index)}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      {/* Assuming your category object has a 'name' property */}
+                      <h4 className="font-bold text-lg capitalize">{cat.name}</h4>
+                      <Users size={16} className="opacity-70" />
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm opacity-80">
+                      <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+                      {/* Random active players for demo feel, or connect to socket live count later */}
+                      {Math.floor(Math.random() * 200) + 20} searching
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-slate-500">
+                  No battle categories available right now.
                 </div>
-                <div className="flex items-center gap-1.5 text-sm opacity-80">
-                  <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
-                  {cat.activePlayers} searching
-                </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* --- ACTIVE MATCHES TICKER --- */}
@@ -300,15 +270,11 @@ const BattleMode = () => {
                     <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
                       {battle.p1[0]}
                     </div>
-                    <span className="font-medium text-slate-700">
-                      {battle.p1}
-                    </span>
+                    <span className="font-medium text-slate-700">{battle.p1}</span>
                   </div>
                   <span className="text-slate-400 font-bold text-xs">VS</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-700">
-                      {battle.p2}
-                    </span>
+                    <span className="font-medium text-slate-700">{battle.p2}</span>
                     <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-xs font-bold text-pink-600">
                       {battle.p2[0]}
                     </div>
@@ -329,15 +295,12 @@ const BattleMode = () => {
       </div>
 
       {/* --- MODALS --- */}
-      
-      {/* 1. Public Matchmaking */}
       <MatchmakingModal
         isOpen={isSearching}
         onClose={() => setIsSearching(false)}
         category={selectedCategory}
       />
 
-      {/* 2. Challenge Friend */}
       <ChallengeFriendModal
         isOpen={isChallengeOpen}
         onClose={() => setIsChallengeOpen(false)}

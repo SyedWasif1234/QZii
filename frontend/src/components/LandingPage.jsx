@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/useAuthStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,Link} from "react-router-dom";
 import Profile from "./Profile";
 
 const LandingPage = () => {
@@ -62,15 +62,9 @@ const LandingPage = () => {
             <span className="text-xl font-bold tracking-tight">QuizMaster</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-            <a href="/" className="hover:text-indigo-600 transition">
-              Home
-            </a>
-            <a href="#" className="hover:text-indigo-600 transition">
-              Leaderboard
-            </a>
-            <a href="#" className="hover:text-indigo-600 transition">
-              For Teams
-            </a>
+           <Link to="/" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Home</Link>
+            <Link to="/leaderboard" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Leaderboard</Link>
+            <Link to="/Battle" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition">BattleMode</Link>
           </div>
           <div className="flex items-center gap-4">
             {authUser ? (
