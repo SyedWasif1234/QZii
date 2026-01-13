@@ -68,6 +68,8 @@ export const initializeSocket = (io) => {
         const roomKey = `room:${roomId}`;
         const room = await redis.hgetall(roomKey);
 
+        console.log("ROOM DATA IN THE VARIABLE room : ", room);
+
         // Validation
         if (!room || Object.keys(room).length === 0) {
           socket.emit("room_error", { message: "Room not found or expired." });
@@ -156,6 +158,92 @@ export const initializeSocket = (io) => {
         console.error("Redis Error joining room:", error);
       }
     });
+
+    socket.on(
+      "submit_answer",
+      async ({ roomId, questionIndex, time_taken, selectedOption }) => {
+        try {
+          const roomKey = `room:${roomId}`;
+
+          // fetch all the data of the specific room
+          const room = await redis.hgetall(roomKey);
+
+          // check if  the room exist
+          if (!room || Object.keys(room).length === 0) {
+            socket.emit("room_error", {
+              message: "Room not found or expired.",
+            });
+            return;
+          }
+
+          //we will find which player answered if he is host or player 2
+          const isHost = room.hostSocketId === socket.id;
+          const playerKey = isHost ? "p1" : "p2";
+
+          // Ideally, we stored the full quiz in Redis when room was created.
+          // IN PRODUCTION WE WILL CALL THE DATABASE FOR THE CORRECT ANSWER
+          // const correctAnswer = await getCorrectAnswer(room.quizId, questionIndex);
+
+          const correctAnswer = 0; // DUMMY: Assume option 0 is always correct for testing
+
+          // 3. Calculating Bonous Score
+          let points = 0;
+          if (selectedOption === correctAnswer) {
+            const speedBonus = Math.max(0, (15 - time_taken) * 2); // More time left = more points
+            points = 10 + speedBonus;
+          }
+
+          // 4. Update Redis State
+          // Storing that this player is "Ready" for next round
+          const updateData = {};
+          updateData[`${playerKey}_score`] =
+            parseInt(room[`${playerKey}_score`] || 0) + points;
+          updateData[`${playerKey}_answered`] = "true"; // Mark as done
+
+          await redis.hset(roomKey, updateData);
+
+          const updatedRoom = await redis.hgetall(roomKey);
+
+          if (
+            updatedRoom.p1_answered === "true" &&
+            updatedRoom.p2_answered === "true"
+           ) {
+            //MOVE TO THE NEXT QUESTION
+            await redis.hset(roomKey, {
+              p1_answered: "false",
+              p2_answered: "false",
+            });
+
+            const next_Index = questionIndex + 1;
+
+            // HERE I WILL STORE Total_Questions variable in room
+            // But as of now i am storing hard coded variable here
+
+            const Total_Questions = 5;
+
+            if (next_Index >= Total_Questions) {
+              io.to(roomId).emit("game_over", {
+                p1: { score: updatedRoom.p1_score },
+                p2: { score: updatedRoom.p2_score },
+              });
+            } else {
+              io.to(roomId).emit("next_question", {
+                next_Index: next_Index,
+                scores: {
+                  p1: updatedRoom.p1_score,
+                  p2: updatedRoom.p2_score,
+                },
+              });
+            }
+          } else {
+            // ONLY ONE ANSWERED -> Notify opponent "Waiting for you..."
+            socket.to(roomId).emit("opponent_answered");
+          }
+        } catch (error) {
+          console.log("REDIS ERROR SUBMITTING ANSWER :", error);
+        }
+      }
+    );
 
     // --- 3. DISCONNECT HANDLER ---
     socket.on("disconnect", async () => {
