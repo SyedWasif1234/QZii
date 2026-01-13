@@ -1,22 +1,35 @@
-# CampusHub
+# QuizMaster
 A full stack application  where users have different roles (Student, Faculty, Admin). This project combines **Role-Based Access Control (RBAC)** for resource management with **Real-Time Multiplayer Battles** powered by WebSockets and Redis.
 
-👥 Roles Involved
+🚀 Features Implemented
 
-    | Role | Permissions |
-    | :--- | :--- |
-    | **Student** | View announcements, take quizzes, join multiplayer battles, view own results. |
-    | **Faculty** | Create quizzes, upload course materials, post announcements, view student performance. |
-    | **Admin** | Full system access, manage users, categories, and system-wide settings. |
+🔐 Authentication & Security
 
-📊 Tables to be Created
+    Secure Auth Flow:** Registration, Login, and Logout using JWT (JSON Web Tokens) stored in HttpOnly cookies.
+    Role-Based Access Control (RBAC): Middleware protects routes based on user roles (`Student`, `Faculty`, `Admin`).
+    Middleware Protection: `AuthMiddleware` verifies sessions, and specific role-checkers ensure data integrity.
 
-    users (with role: student, faculty, admin)
-    api_keys
-    announcements
-    results
-    courses
-    materials
+⚔️ Real-Time Battle Mode (Socket.io + Redis)
+
+    1v1 Multiplayer: Real-time quiz battles between users.
+    Event-Driven Architecture: Uses Socket.io to push updates (scores, next question) only when state changes, minimizing server load.
+    Redis Caching: "Hot" game data (room state, current scores, question sets) is stored in Redis for lightning-fast access, reducing database I/O.
+    Latency Handling: Server-side validation ensures fair play while client-side timers provide immediate visual feedback.
+
+📚 Quiz & Content Management
+
+    Category Management: Admin-managed topics (e.g., JavaScript, System Design).
+    Quiz Engine: Faculty/Admins can create quizzes and manage question banks.
+    Data Fetching: Efficiently fetches quiz data from PostgreSQL via Prisma ORM.
+
+🛠️ Tech Stack
+
+    Runtime: Node.js
+    Framework: Express.js
+    Database: PostgreSQL (via Prisma ORM)
+    Caching/Real-time Store:** Redis (Upstash)
+    WebSockets: Socket.io
+    Authentication:JWT, Bcrypt.js, Cookie-Parser
 
 🧾 API Routes to Build
 
@@ -27,81 +40,58 @@ A full stack application  where users have different roles (Student, Faculty, Ad
     POST /auth/api-key → Generate API key
     GET /auth/me → Get current user profile
 
-📢 Announcements:
+⚔️ Battle Mode (Socket Events):
 
-    POST /announcements → Faculty/Admin only
-    GET /announcements → Accessible to all roles
+    The battle system uses a separate socket handler optimized with Redis:
+    1.  `create_challenge`: Host initializes a room. Server fetches quiz from DB, strips answers, and caches game state in Redis.
+    2.  `join_challenge`: Opponent joins via Room ID. Server syncs game state.
+    3.  `submit_answer`: Validates answers against Redis cache. Updates score.
+    4.  `next_question` / `game_over`: Server pushes state updates to both clients simultaneously.
 
-🎓 Results:
+📚 Quiz & Categories :
+    
+    Category Controller: Manage quiz topics.
+    Quiz API: CRUD operations for Quizzes.
+    Questions API: Add/Edit questions linked to specific quizzes.
 
-    POST /results → Admin only
-    GET /results/:studentId →
-    Student: Only own results
-    Faculty/Admin: Any student's results
+📦 Installation & Setup
 
-📚 Courses & Materials:
+    1.  Clone the repository:
+        ```bash
+        git clone [https://github.com/yourusername/campushub.git](https://github.com/yourusername/campushub.git)
+        cd campushub
+        ```
+    
+    2.  Install Dependencies:
+        ```bash
+        npm install
+        ```
+    
+    3.  **Environment Setup:
+       
+        Create a `.env` file in the root directory:
+        ```env
+        PORT=
+        DATABASE_URL=
+        REDIS_URL=
+        JWT_SECRET="your_secure_secret"
+        ```
+    
+    5. Database Migration (Prisma):
+        ```bash
+        npx prisma migrate dev --name init
+        ```
+    
+    6. Run the Server:
+        ```bash
+        npm run dev
+        ```
 
-    GET /courses → All roles
-    POST /courses → Admin only
-    POST /courses/:courseId/materials → Faculty only
-    GET /courses/:courseId/materials → Students & faculty
+---
 
-⚙ Admin-only:
+🎯 Key Learnings Implemented
 
-    GET /admin/users → List all users
-    PUT /admin/users/:id/role → Change user role
-
-🛡 RBAC Middleware Flow
-
-    Use middleware like checkRole(['admin', 'faculty'])
-    Protect each route based on allowed roles
-    Combine JWT + API key middleware
-
-
-
-📊 Tables 
-
-    users (with role: student, faculty, admin)
-    api_keys
-    announcements
-    results
-    courses
-    materials
-
-🎯 Covered
-
-    Express.js API with robust RBAC system
-    JWT authentication
-    API key requirement
-    Role-based route protection
-    Postman collection showing user flows for each role
-    Modular, clean, production-quality backend
-
-MODELS RELATION :-
-
-    📊 Summary Table
-
-        Relation_Type	        Model A	                Model B	                        Relation
-
-        1 : M	                  User	                 ApiKey	                user.apiKeys ↔ apiKey.user
-        1 : M	                User (faculty)	         Courses	             user.course ↔ courses.user
-        M : M (via Enrollment)	User (student)	         Courses	            user.enrollments ↔ courses.enrollments
-        M : M (via Results)	    User (student)	         Courses	             user.result ↔ courses.results
-        1 : M	                    User	           Announcements	        user.announcements ↔ announcement.user
-        1 : M	                  Courses	            Announcements            courses.announcements ↔ announcement.course
-        1 : M	                    User	              Materials	            user.materials ↔ materials.user
-        1 : M	                  Courses	              Materials	            courses.materials ↔ materials.course
-
-
-🐱‍👤Dependencies:
-
-    npm init
-    npm i nodemon
-    npm i Express
-    npm i dotenv
-    npm install prisma --save-dev 
-    npm install @prisma/client    
-    npx prisma init
-    npm i cookie-parser  
-    npm i bcryptjs
-    npm i jsonwebtoken
+    Modular Architecture: Separation of concerns (Controllers, Routes, Middleware, Socket Handlers).
+    Hybrid Database Approach: Using PostgreSQL for persistent data (Users, Quizzes) and Redis for ephemeral data (Active Battles).
+    Optimistic UI Patterns: Synchronizing client-side timers with server-side validation to ensure a smooth user experience.
+    Secure Authentication: Implementation of HttpOnly cookies to prevent XSS attacks.
